@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네이버 셀아웃 대시보드 | 2026.05.21</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap');
+  :root {
+    --bg:#0a0c10;--surface:#12151c;--surface2:#1a1f2b;--border:#232a38;
+    --accent:#3b82f6;--accent2:#22d3ee;--accent3:#a78bfa;
+    --positive:#10b981;--negative:#f43f5e;--neutral:#f59e0b;
+    --text:#e2e8f0;--text-muted:#64748b;--text-dim:#94a3b8;
+    --mg:#3b82f6;--ohc:#22d3ee;--bt:#a78bfa;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  header{padding:20px 32px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#0d1117,#0a0c10);position:sticky;top:0;z-index:100}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(59,130,246,.35)}
+  .brand-text h1{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;line-height:1}
+  .brand-text p{font-size:11px;color:var(--text-muted);letter-spacing:.5px;font-weight:300}
+  .header-date .date-main{font-family:'DM Mono',monospace;font-size:16px;color:var(--accent2);font-weight:500}
+  .header-date .date-sub{font-size:11px;color:var(--text-muted);margin-top:2px;text-align:right}
+  main{padding:24px 32px;max-width:1600px;margin:0 auto}
+  .section-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .section-label::before{content:'';display:block;width:3px;height:12px;border-radius:2px;background:var(--accent)}
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+  .kpi-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:0;transition:opacity .2s}
+  .kpi-card:hover::before,.kpi-card.highlight::before{opacity:1}
+  .kpi-card.highlight{border-color:rgba(59,130,246,.4);background:linear-gradient(135deg,#12151c,#151c2a)}
+  .kpi-label{font-size:11px;color:var(--text-muted);margin-bottom:8px}
+  .kpi-value{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;line-height:1.1;margin-bottom:6px}
+  .kpi-value .unit{font-size:13px;color:var(--text-muted);font-weight:400}
+  .kpi-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;font-family:'DM Mono',monospace}
+  .kpi-badge.pos{background:rgba(16,185,129,.15);color:var(--positive)}
+  .kpi-badge.neg{background:rgba(244,63,94,.15);color:var(--negative)}
+  .kpi-sub{font-size:10px;color:var(--text-muted);margin-top:4px}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+  .chart-card,.weekly-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px}
+  .weekly-card{margin-bottom:28px}
+  .chart-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+  .chart-title{font-size:14px;font-weight:700;margin-bottom:3px}
+  .chart-subtitle{font-size:11px;color:var(--text-muted)}
+  .legend-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-dim)}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .chart-wrap{position:relative;height:240px}
+  .weekly-wrap{position:relative;height:280px}
+  .tables-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .table-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+  .table-title{font-size:14px;font-weight:700}
+  .table-date{font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace}
+  table{width:100%;border-collapse:collapse}
+  thead th{padding:10px 16px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);background:var(--surface2);border-bottom:1px solid var(--border);font-weight:500}
+  thead th:last-child,tbody td:last-child{text-align:right}
+  tbody tr{border-bottom:1px solid rgba(35,42,56,.6);transition:background .15s}
+  tbody tr:hover{background:rgba(59,130,246,.05)}
+  tbody tr:last-child{border-bottom:none}
+  tbody td{padding:11px 16px;font-size:13px;color:var(--text-dim)}
+  .rank-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);width:24px;text-align:center}
+  .sku-code{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);font-weight:500}
+  .bar-cell{min-width:80px}
+  .mini-bar-wrap{display:flex;align-items:center;gap:8px}
+  .mini-bar-bg{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+  .mini-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .qty-num{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);text-align:right;font-weight:500;min-width:36px}
+  .cat-pill{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;letter-spacing:.5px}
+  .cat-mg{background:rgba(59,130,246,.15);color:var(--mg)}
+  .cat-ohc{background:rgba(34,211,238,.15);color:var(--ohc)}
+  .cat-bt{background:rgba(167,139,250,.15);color:var(--bt)}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--positive);box-shadow:0 0 8px var(--positive);animation:pulse 2s infinite;display:inline-block;margin-right:6px}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .kpi-card{animation:fadeUp .4s ease both}
+  .kpi-card:nth-child(1){animation-delay:.05s}.kpi-card:nth-child(2){animation-delay:.1s}
+  .kpi-card:nth-child(3){animation-delay:.15s}.kpi-card:nth-child(4){animation-delay:.2s}
+  .kpi-card:nth-child(5){animation-delay:.25s}
+  .chart-card,.weekly-card,.table-card{animation:fadeUp .5s ease both;animation-delay:.3s}
+  .update-stamp{font-size:10px;color:var(--text-muted);text-align:center;padding:20px;opacity:.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="brand-icon">📊</div>
+    <div class="brand-text">
+      <h1>NAVER SELLOUT</h1>
+      <p><span class="live-dot"></span>Daily Performance Dashboard · 2026</p>
+    </div>
+  </div>
+  <div class="header-date">
+    <div class="date-main">2026.05.21</div>
+    <div class="date-sub">자동 생성: 2026-05-23 01:55 KST</div>
+  </div>
+</header>
+<main>
+  <div class="section-label">섹션 01 &nbsp;|&nbsp; 핵심 지표</div>
+  <div class="kpi-grid">
+    <div class="kpi-card highlight">
+      <div class="kpi-label">전일 매출 (2026.05.21)</div>
+      <div class="kpi-value">6,716<span class="unit">만원</span></div>
+      <span class="kpi-badge pos">▲ 12.1%</span>
+      <div class="kpi-sub">vs 전전일 5,991만원</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">MOM (월 대비)</div>
+      <div class="kpi-value">-17.8<span class="unit">%</span></div>
+      <span class="kpi-badge neg">▼ -17.8%</span>
+      <div class="kpi-sub">전월 16.4억 → 이번달 16.4억</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">YOY (연 대비)</div>
+      <div class="kpi-value">+12.7<span class="unit">%</span></div>
+      <span class="kpi-badge pos">▲ 12.7%</span>
+      <div class="kpi-sub">25년 14.6억 → 26년 16.4억</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">MTD (5월 누적)</div>
+      <div class="kpi-value">16.4<span class="unit">억</span></div>
+      <span class="kpi-badge pos">▲ 12.7%</span>
+      <div class="kpi-sub">2025년 동월 14.6억</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">YTD (연간 누적)</div>
+      <div class="kpi-value">96.5<span class="unit">억</span></div>
+      <span class="kpi-badge pos">▲ 51.2%</span>
+      <div class="kpi-sub">2025년 63.8억</div>
+    </div>
+  </div>
+
+  <div class="section-label">섹션 02 &nbsp;|&nbsp; 일별 트렌드 & 카테고리 믹스</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">일별 매출 트렌드 (5월)</div>
+          <div class="chart-subtitle">단위: 만원</div>
+        </div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Philips</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div>Sonicare</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">카테고리별 수량 믹스 (5월)</div>
+          <div class="chart-subtitle">MG / OHC / BT 주간 판매 수량</div>
+        </div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--mg)"></div>MG</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--ohc)"></div>OHC</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--bt)"></div>BT</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="catChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-label">섹션 03 &nbsp;|&nbsp; Weekly Sell-Out 트렌드 (2026 vs 2025 누적)</div>
+  <div class="weekly-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">주간 셀아웃 누적 비교</div>
+        <div class="chart-subtitle">2025년 vs 2026년 YTD 누적 매출 · 단위: 억원</div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>2026 누적</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div>2025 누적</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--positive)"></div>YoY CSG%</div>
+      </div>
+    </div>
+    <div class="weekly-wrap"><canvas id="weeklyChart"></canvas></div>
+  </div>
+
+  <div class="section-label">섹션 04 &nbsp;|&nbsp; SKU 성과 순위</div>
+  <div class="tables-row">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">🏆 전일 TOP 10 SKU</div>
+        <div class="table-date">기준: 2026.05.21 (수량)</div>
+      </div>
+      <table>
+        <thead><tr><th style="width:36px">#</th><th>SKU</th><th>Cat</th><th>수량</th><th>MTD</th></tr></thead>
+        <tbody><tr>
+              <td class="rank-num">🥇</td>
+              <td><span class="sku-code">NT3650/16</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:100%"></div></div>
+                  <span class="qty-num">11</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">753</td>
+            </tr><tr>
+              <td class="rank-num">🥈</td>
+              <td><span class="sku-code">S3241/12</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:91%"></div></div>
+                  <span class="qty-num">10</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">174</td>
+            </tr><tr>
+              <td class="rank-num">🥉</td>
+              <td><span class="sku-code">S3243/12+NT1650/16</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:91%"></div></div>
+                  <span class="qty-num">10</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">330</td>
+            </tr><tr>
+              <td class="rank-num">4</td>
+              <td><span class="sku-code">XP9403/49</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:82%"></div></div>
+                  <span class="qty-num">9</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">329</td>
+            </tr><tr>
+              <td class="rank-num">5</td>
+              <td><span class="sku-code">S5880/33</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:73%"></div></div>
+                  <span class="qty-num">8</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">1,026</td>
+            </tr><tr>
+              <td class="rank-num">6</td>
+              <td><span class="sku-code">S7887/71</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:73%"></div></div>
+                  <span class="qty-num">8</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">192</td>
+            </tr><tr>
+              <td class="rank-num">7</td>
+              <td><span class="sku-code">SH91/51</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:64%"></div></div>
+                  <span class="qty-num">7</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">390</td>
+            </tr><tr>
+              <td class="rank-num">8</td>
+              <td><span class="sku-code">XP9404/26</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:36%"></div></div>
+                  <span class="qty-num">4</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">145</td>
+            </tr><tr>
+              <td class="rank-num">9</td>
+              <td><span class="sku-code">X5012/05</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:36%"></div></div>
+                  <span class="qty-num">4</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">74</td>
+            </tr><tr>
+              <td class="rank-num">10</td>
+              <td><span class="sku-code">S5880/33+NT1650/16</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:27%"></div></div>
+                  <span class="qty-num">3</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">9</td>
+            </tr></tbody>
+      </table>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">📅 월 누적 TOP 10 SKU (MTD)</div>
+        <div class="table-date">기준: 5월 누적</div>
+      </div>
+      <table>
+        <thead><tr><th style="width:36px">#</th><th>SKU</th><th>Cat</th><th>MTD 수량</th><th>전일</th></tr></thead>
+        <tbody><tr>
+              <td class="rank-num">🥇</td>
+              <td><span class="sku-code">S5880/33</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:100%"></div></div>
+                  <span class="qty-num">1,026</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">8</td>
+            </tr><tr>
+              <td class="rank-num">🥈</td>
+              <td><span class="sku-code">NT3650/16</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:73%"></div></div>
+                  <span class="qty-num">753</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">11</td>
+            </tr><tr>
+              <td class="rank-num">🥉</td>
+              <td><span class="sku-code">SP9887/36</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:57%"></div></div>
+                  <span class="qty-num">584</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">1</td>
+            </tr><tr>
+              <td class="rank-num">4</td>
+              <td><span class="sku-code">SH91/51</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:38%"></div></div>
+                  <span class="qty-num">390</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">7</td>
+            </tr><tr>
+              <td class="rank-num">5</td>
+              <td><span class="sku-code">S3243/12+NT1650/16</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:32%"></div></div>
+                  <span class="qty-num">330</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">10</td>
+            </tr><tr>
+              <td class="rank-num">6</td>
+              <td><span class="sku-code">XP9403/49</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:32%"></div></div>
+                  <span class="qty-num">329</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">9</td>
+            </tr><tr>
+              <td class="rank-num">7</td>
+              <td><span class="sku-code">S7887/72</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:32%"></div></div>
+                  <span class="qty-num">326</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">0</td>
+            </tr><tr>
+              <td class="rank-num">8</td>
+              <td><span class="sku-code">CC12/51</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:25%"></div></div>
+                  <span class="qty-num">261</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">3</td>
+            </tr><tr>
+              <td class="rank-num">9</td>
+              <td><span class="sku-code">XP9213/73</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:24%"></div></div>
+                  <span class="qty-num">244</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">0</td>
+            </tr><tr>
+              <td class="rank-num">10</td>
+              <td><span class="sku-code">S5889/71</span></td>
+              <td><span class="cat-pill cat-mg">MG</span></td>
+              <td class="bar-cell">
+                <div class="mini-bar-wrap">
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:21%"></div></div>
+                  <span class="qty-num">214</span>
+                </div>
+              </td>
+              <td class="qty-num" style="color:var(--text-muted)">0</td>
+            </tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="update-stamp">자동 생성: 2026-05-23 01:55 KST · GitHub Actions · parse_dashboard.py</div>
+</main>
+<script>
+const gridColor='rgba(35,42,56,0.7)',tickColor='#64748b';
+const fontBase={family:"'DM Mono',monospace",size:11};
+Chart.defaults.color=tickColor; Chart.defaults.font=fontBase;
+
+// 1) 일별 매출
+const ctx1=document.getElementById('dailyChart').getContext('2d');
+const g1=ctx1.createLinearGradient(0,0,0,240);
+g1.addColorStop(0,'rgba(59,130,246,0.3)'); g1.addColorStop(1,'rgba(59,130,246,0)');
+const g2=ctx1.createLinearGradient(0,0,0,240);
+g2.addColorStop(0,'rgba(34,211,238,0.2)'); g2.addColorStop(1,'rgba(34,211,238,0)');
+new Chart(ctx1,{type:'line',data:{labels:["5/1", "5/2", "5/3", "5/4", "5/5", "5/6", "5/7", "5/8", "5/9", "5/10", "5/11", "5/12", "5/13", "5/14", "5/15", "5/16", "5/17", "5/18", "5/19", "5/20", "5/21"],datasets:[
+  {label:'Philips(만원)',data:[6581.3, 5835.4, 5901.2, 5479.5, 6385.2, 9264.4, 6488.5, 5125.8, 3801.4, 5109.0, 6626.8, 5384.3, 4845.1, 5393.2, 3827.1, 3678.1, 4257.0, 5857.4, 4662.3, 4276.4, 5003.8],borderColor:'#3b82f6',backgroundColor:g1,fill:true,tension:0.35,pointRadius:2,pointHoverRadius:5,borderWidth:2},
+  {label:'Sonicare(만원)',data:[1576.7, 1924.9, 1869.5, 4504.5, 3087.4, 3013.6, 3853.9, 2458.0, 2246.2, 3979.6, 2822.9, 2593.5, 1974.3, 1846.7, 1819.8, 1599.3, 1836.7, 1639.7, 2419.6, 1714.8, 1712.7],borderColor:'#22d3ee',backgroundColor:g2,fill:true,tension:0.35,pointRadius:2,pointHoverRadius:5,borderWidth:2}
+]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1f2b',borderColor:'#232a38',borderWidth:1,
+callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}만원`}}},
+scales:{x:{grid:{color:gridColor},ticks:{maxTicksLimit:12}},y:{grid:{color:gridColor},ticks:{callback:v=>v>=1000?`${(v/100).toFixed(0)}억`:`${v}만`}}}}
+});
+
+// 2) 카테고리 주간 바
+new Chart(document.getElementById('catChart'),{type:'bar',data:{labels:["W1 (1일~7일)", "W2 (8일~14일)", "W3 (15일~10일)"],datasets:[
+  {label:'MG',data:[2537, 1928, 3163],backgroundColor:'rgba(59,130,246,0.75)',borderRadius:4,borderSkipped:false},
+  {label:'OHC',data:[1970, 1808, 2833],backgroundColor:'rgba(34,211,238,0.75)',borderRadius:4,borderSkipped:false},
+  {label:'BT',data:[478, 516, 925],backgroundColor:'rgba(167,139,250,0.75)',borderRadius:4,borderSkipped:false}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+tooltip:{backgroundColor:'#1a1f2b',borderColor:'#232a38',borderWidth:1,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}개`}}},
+scales:{x:{grid:{display:false}},y:{grid:{color:gridColor}}}
+});
+
+// 3) 주간 YTD
+const ctx3=document.getElementById('weeklyChart').getContext('2d');
+const g3=ctx3.createLinearGradient(0,0,0,280);
+g3.addColorStop(0,'rgba(59,130,246,0.25)'); g3.addColorStop(1,'rgba(59,130,246,0.01)');
+const g4=ctx3.createLinearGradient(0,0,0,280);
+g4.addColorStop(0,'rgba(100,116,139,0.2)'); g4.addColorStop(1,'rgba(100,116,139,0.01)');
+new Chart(ctx3,{type:'line',data:{labels:["W01", "W02", "W03", "W04", "W05", "W06", "W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W15", "W16", "W17", "W18", "W19", "W20", "W21"],datasets:[
+  {label:'2026 YTD(억원)',data:[2.6, 7.2, 12.0, 16.6, 21.0, 26.7, 31.7, 35.7, 40.8, 45.8, 51.1, 54.7, 58.8, 62.7, 67.3, 71.5, 76.4, 82.4, 88.9, 93.7, 96.5],borderColor:'#3b82f6',backgroundColor:g3,fill:true,tension:0.3,pointRadius:3,pointHoverRadius:6,borderWidth:2.5,yAxisID:'y',order:2},
+  {label:'2025 YTD(억원)',data:[3.4, 6.9, 10.2, 13.3, 15.9, 19.2, 23.6, 26.3, 29.0, 31.2, 33.4, 36.0, 38.6, 40.3, 42.4, 44.6, 49.2, 52.7, 57.3, 60.3, 63.1],borderColor:'#64748b',backgroundColor:g4,fill:true,tension:0.3,pointRadius:2,pointHoverRadius:5,borderWidth:1.5,borderDash:[4,3],yAxisID:'y',order:3},
+  {label:'YoY CSG%',data:[-22.6, 29.4, 45.4, 50.1, 68.8, 73.8, 12.6, 47.0, 92.2, 119.7, 150.1, 34.7, 62.6, 122.7, 124.8, 84.5, 6.5, 73.4, 41.1, 64.8, -5.5],borderColor:'#10b981',backgroundColor:'transparent',tension:0.3,pointRadius:3,pointHoverRadius:6,borderWidth:2,yAxisID:'y1',order:1}
+]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1f2b',borderColor:'#232a38',borderWidth:1,
+callbacks:{label:ctx=>ctx.datasetIndex===2?` CSG: ${ctx.parsed.y}%`:` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}억원`}}},
+scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor},ticks:{callback:v=>`${v.toFixed(0)}억`},position:'left'},
+y1:{grid:{display:false},ticks:{callback:v=>`${v}%`},position:'right'}}
+});
+</script>
+</body>
+</html>
